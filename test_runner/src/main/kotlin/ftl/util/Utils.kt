@@ -118,10 +118,13 @@ fun copyBinaryResource(name: String) {
     destinationPath.parent.toFile().mkdirs()
 
     // "binaries/" folder prefix is required for Linux to find the resource.
-    Files.copy(
-        Paths.get("binaries", name),
-        destinationPath
-    )
+    classLoader?.getResource(name)?.path?.let {
+        Files.copy(
+            Paths.get(it),
+            destinationPath
+        )
+    }
+
     destinationFile.setExecutable(true)
 }
 
