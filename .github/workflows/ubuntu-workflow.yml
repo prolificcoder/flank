@@ -21,11 +21,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
-      - name: Install xmllint
-        run: sudo apt-get install openjdk-8-jdk
     
-      - name: Display the path
+      - name: Display the java version
         run: java -version 
         shell: bash
 
@@ -42,4 +39,4 @@ jobs:
           # Path to the Gradle executable
           gradle-executable: "./test_runner/gradlew"
           # Gradle command line arguments, see gradle --help
-          arguments: "-p test_runner clean build -Dorg.gradle.java.home=/usr/lib/jvm/java-8-openjdk-amd64"
+          arguments: "-p test_runner clean build"
