@@ -119,7 +119,7 @@ fun copyBinaryResource(name: String) {
 
     // "binaries/" folder prefix is required for Linux to find the resource.
     Files.copy(
-        getResource("binaries/$name"),
+        Paths.get("binaries", name),
         destinationPath
     )
     destinationFile.setExecutable(true)
