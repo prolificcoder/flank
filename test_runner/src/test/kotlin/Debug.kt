@@ -10,8 +10,8 @@ fun main() {
     // run "gradle check" to generate required fixtures
     val projectId = System.getenv("GOOGLE_CLOUD_PROJECT")
         ?: "YOUR PROJECT ID"
-    val quantity = "single"
-    val type = "success"
+    val quantity = "multiple"
+    val type = "apk"
 
     // Bugsnag keeps the process alive so we must call exitProcess
     // https://github.com/bugsnag/bugsnag-java/issues/151
@@ -21,6 +21,8 @@ fun main() {
             "firebase", "test",
             "android", "run",
 //            "--dry",
+//            "--dump-shards",
+            "--output-style=single",
             "-c=src/test/kotlin/ftl/fixtures/test_app_cases/flank-$quantity-$type.yml",
             "--project=$projectId"
 //            "--client-details=key1=value1,key2=value2"
