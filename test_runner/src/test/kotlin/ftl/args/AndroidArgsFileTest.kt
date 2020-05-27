@@ -197,7 +197,7 @@ class AndroidArgsFileTest {
     @Test
     fun `should distribute equally to shards`() {
         val config = configWithTestMethods(155, maxTestShards = 40)
-        val testShardChunks = getAndroidShardChunks(config, config.testApk!!)
+        val testShardChunks = getAndroidShardChunks(config)
         with(config) {
             assert(maxTestShards, 40)
             assert(testShardChunks.size, 40)
