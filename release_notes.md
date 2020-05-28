@@ -9,6 +9,7 @@
 - [#805](https://github.com/Flank/flank/pull/805) Fix overlapping results. ([pawelpasterz](https://github.com/pawelpasterz))
 - [#812](https://github.com/Flank/flank/issues/812) Convert bitrise macOS workflow to github action. ([piotradamczyk5](https://github.com/piotradamczyk5))
 - [#799](https://github.com/Flank/flank/pull/799) Refactor Shared object by splitting it into smaller functions. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#822](https://github.com/Flank/flank/pull/822) Prevent set test targets is sharding is disabled and test-targets not set. ([adamfilipow92](https://github.com/adamfilipow92))
 
 ## v20.05.2
 
