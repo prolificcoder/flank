@@ -136,7 +136,7 @@ data class AndroidGcloudConfig @JsonIgnore constructor(
                 "The shards are run in parallel on separate devices. For example," +
                 "if your test execution contains 20 test cases and you specify four shards, each shard executes five test cases." +
                 "The number of shards should be less than the total number of test cases." +
-                "The number of shards specified must be >= 1 and <= 50." +
+                "The number of shards specified must be >= 1 and <= 250." +
                 "This option cannot be used along max-test-shards and is not compatible with smart sharding." +
                 "If you want to take benefits of smart sharding use max-test-shards."]
     )

@@ -181,7 +181,7 @@ class AndroidRunCommandTest {
 
     @Test
     fun `numUniformShards parse`() {
-        val expected = 50
+        val expected = 250
         val cmd = AndroidRunCommand()
         CommandLine(cmd).parseArgs("--num-uniform-shards=$expected")
 
