@@ -5,16 +5,17 @@ import ftl.args.ArgsHelper.assertCommonProps
 import ftl.args.ArgsHelper.assertFileExists
 import ftl.args.ArgsHelper.assertGcsFileExists
 import ftl.args.ArgsHelper.createGcsBucket
-import ftl.args.ArgsHelper.mergeYmlMaps
 import ftl.args.ArgsHelper.validateTestMethods
-import ftl.args.yml.GcloudYml
-import ftl.args.yml.IosGcloudYml
+import ftl.args.yml.mergeYmlKeys
 import ftl.config.FtlConstants
+import ftl.config.common.CommonGcloudConfig
+import ftl.config.ios.IosGcloudConfig
 import ftl.shard.TestMethod
 import ftl.shard.TestShard
 import ftl.shard.stringShards
 import ftl.test.util.FlankTestRunner
 import ftl.test.util.TestHelper.absolutePath
+import ftl.test.util.assertThrowsWithMessage
 import ftl.util.FlankFatalError
 import io.mockk.every
 import io.mockk.spyk
@@ -26,15 +27,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.contrib.java.lang.system.EnvironmentVariables
 import org.junit.contrib.java.lang.system.SystemErrRule
-import org.junit.rules.ExpectedException
 import org.junit.runner.RunWith
 
 @RunWith(FlankTestRunner::class)
 class ArgsHelperTest {
-
-    @Rule
-    @JvmField
-    val exceptionRule = ExpectedException.none()!!
 
     @Rule
     @JvmField
@@ -48,7 +44,7 @@ class ArgsHelperTest {
 
     @Test
     fun `mergeYmlMaps succeeds`() {
-        val merged = mergeYmlMaps(GcloudYml, IosGcloudYml)
+        val merged = mergeYmlKeys(CommonGcloudConfig, IosGcloudConfig)
         assertThat(merged.keys.size).isEqualTo(1)
         assertThat(merged["gcloud"]?.size).isEqualTo(11)
     }
@@ -60,8 +56,9 @@ class ArgsHelperTest {
 
     @Test
     fun `assertFileExists fails`() {
-        exceptionRule.expectMessage("'/tmp/1/2/3/fake'  doesn't exist")
-        assertFileExists("/tmp/1/2/3/fake", "")
+        assertThrowsWithMessage(Throwable::class, "'/tmp/1/2/3/fake'  doesn't exist") {
+            assertFileExists("/tmp/1/2/3/fake", "")
+        }
     }
 
     @Test
@@ -71,8 +68,9 @@ class ArgsHelperTest {
 
     @Test
     fun `assertGcsFileExists fails`() {
-        exceptionRule.expectMessage("The file at 'gs://does-not-exist' does not exist")
-        assertGcsFileExists("gs://does-not-exist")
+        assertThrowsWithMessage(Throwable::class, "The file at 'gs://does-not-exist' does not exist") {
+            assertGcsFileExists("gs://does-not-exist")
+        }
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -97,20 +95,22 @@ class ArgsHelperTest {
 
     @Test
     fun `validateTestMethods validationOn`() {
-        exceptionRule.expectMessage(" is missing methods: [d].")
         val testTargets = listOf("d")
         val validTestMethods = listOf("a", "b", "c")
         val skipValidation = false
-        validateTestMethods(testTargets, validTestMethods, "", skipValidation)
+        assertThrowsWithMessage(Throwable::class, " is missing methods: [d].") {
+            validateTestMethods(testTargets, validTestMethods, "", skipValidation)
+        }
     }
 
     @Test
     fun `validateTestMethods validationOn Empty`() {
-        exceptionRule.expectMessage("has no tests")
         val testTargets = emptyList<String>()
         val validTestMethods = emptyList<String>()
         val skipValidation = false
-        validateTestMethods(testTargets, validTestMethods, "", skipValidation)
+        assertThrowsWithMessage(Throwable::class, "has no tests") {
+            validateTestMethods(testTargets, validTestMethods, "", skipValidation)
+        }
     }
 
     @Test
@@ -189,28 +189,29 @@ class ArgsHelperTest {
     @Test
     fun testInvalidTestShards() {
         val maxTestShards = -2
-        exceptionRule.expectMessage("max-test-shards must be >= 1 and <= 50, or -1. But current is $maxTestShards")
 
         val args = spyk(AndroidArgs.default())
         every { args.maxTestShards } returns maxTestShards
-        assertCommonProps(args)
+        assertThrowsWithMessage(Throwable::class, "max-test-shards must be >= ${IArgs.AVAILABLE_SHARD_COUNT_RANGE.first} and <= ${IArgs.AVAILABLE_SHARD_COUNT_RANGE.last}. But current is $maxTestShards") {
+            assertCommonProps(args)
+        }
     }
 
     @Test
     fun testInvalidShardTime() {
-        exceptionRule.expectMessage("shard-time must be >= 1 or -1")
-
         val args = spyk(AndroidArgs.default())
         every { args.shardTime } returns -2
-        assertCommonProps(args)
+        assertThrowsWithMessage(Throwable::class, "shard-time must be >= 1 or -1") {
+            assertCommonProps(args)
+        }
     }
 
     @Test
     fun testInvalidRepeatTests() {
-        exceptionRule.expectMessage("num-test-runs must be >= 1")
-
         val args = spyk(AndroidArgs.default())
         every { args.repeatTests } returns 0
-        assertCommonProps(args)
+        assertThrowsWithMessage(Throwable::class, "num-test-runs must be >= 1") {
+            assertCommonProps(args)
+        }
     }
 }

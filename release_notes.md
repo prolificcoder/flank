@@ -1,6 +1,27 @@
 ## next (unreleased)
+- [#857](https://github.com/Flank/flank/pull/857) Added multimodule setup for test app. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#837](https://github.com/Flank/flank/pull/837) Added obfuscate option to dump shards. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#868](https://github.com/Flank/flank/pull/868) Restored weblinks to all test results, not just failures. ([rainnapper](https://github.com/rainnapper))
+- [#828](https://github.com/Flank/flank/pull/828) Store test results in gcloud bucket. ([adamfilipow92](https://github.com/adamfilipow92))
+- [#865](https://github.com/Flank/flank/pull/865) Flank needs to respect the timeout value as that's a cap for billing purposes. ([adamfilipow92](https://github.com/adamfilipow92), [pawelpasterz](https://github.com/pawelpasterz))
+- [#866](https://github.com/Flank/flank/pull/866) Fix printing all matrix links. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#862](https://github.com/Flank/flank/pull/862) Added printing outcome details. ([piotradamczyk5](https://github.com/piotradamczyk5), [jan-gogo](https://github.com/jan-gogo))
+- [#876](https://github.com/Flank/flank/pull/876) Added --directories-to-pull validation and avoid making request with empty toolStepResult. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#875](https://github.com/Flank/flank/pull/875) Enhance permission denied exception logs. ([adamfilipow92](https://github.com/adamfilipow92), [pawelpasterz](https://github.com/pawelpasterz))
+-
 
-- [#801](https://github.com/Flank/flank/pull/801) Omit missing app apk if additional-app-test-apks specified. ([jan-gogo](https://github.com/jan-gogo)) 
+## v20.06.2
+- [#853](https://github.com/Flank/flank/pull/853) Store @Ignore tests in the JUnit XML without sending ignored tests to FTL. ([piotradamczyk5](https://github.com/piotradamczyk5), [adamfilipow92](https://github.com/adamfilipow92))
+- [#853](https://github.com/Flank/flank/pull/858) Handle duplicated apk names. ([jan-gogo](https://github.com/jan-gogo))
+
+## v20.06.1
+- [#840](https://github.com/Flank/flank/pull/840) Fix parametrized tests. ([jan-gogo](https://github.com/jan-gogo), [adamfilipow92](https://github.com/adamfilipow92), [pawelpasterz](https://github.com/pawelpasterz), [piotradamczyk5](https://github.com/piotradamczyk5))
+
+## v20.06.0
+
+- [#831](https://github.com/Flank/flank/pull/831) Refactor config entities and arguments. ([jan-gogo](https://github.com/jan-gogo))
+- [#817](https://github.com/Flank/flank/pull/817) Add AndroidTestContext as base data for dump shards & test execution. ([jan-gogo](https://github.com/jan-gogo))
+- [#801](https://github.com/Flank/flank/pull/801) Omit missing app apk if additional-app-test-apks specified. ([jan-gogo](https://github.com/jan-gogo))
 - [#784](https://github.com/Flank/flank/pull/784) Add output-style option. ([jan-gogo](https://github.com/jan-gogo))
 - [#779](https://github.com/Flank/flank/pull/779) Print retries & display additional info. ([jan-gogo](https://github.com/jan-gogo))
 - [#793](https://github.com/Flank/flank/issues/793) Better error message on file not found. ([adamfilipow92](https://github.com/adamfilipow92))
@@ -9,6 +30,12 @@
 - [#805](https://github.com/Flank/flank/pull/805) Fix overlapping results. ([pawelpasterz](https://github.com/pawelpasterz))
 - [#812](https://github.com/Flank/flank/issues/812) Convert bitrise macOS workflow to github action. ([piotradamczyk5](https://github.com/piotradamczyk5))
 - [#799](https://github.com/Flank/flank/pull/799) Refactor Shared object by splitting it into smaller functions. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#798](https://github.com/Flank/flank/pull/798) Remove failure nodes from tests that passed on retry so that Jenkins JUnit plugin marks them as successful. ([adamfilipow92](https://github.com/adamfilipow92))
+- [#822](https://github.com/Flank/flank/pull/822) Allow runtime test discovery when sharding is disabled by not setting test-targets. This unblocks cucumber testing. ([adamfilipow92](https://github.com/adamfilipow92))
+- [#819](https://github.com/Flank/flank/pull/819) Display matrix results in a table format. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#825](https://github.com/Flank/flank/pull/825) Automatically convert -1 in maximum-test-shards to the maximum shard amount. ([adamfilipow92](https://github.com/adamfilipow92))
+- [#833](https://github.com/Flank/flank/pull/833) More error messages improvements. ([piotradamczyk5](https://github.com/piotradamczyk5))
+- [#826](https://github.com/Flank/flank/pull/826) Omit `environment-variables` for robo test executions instead of throwing exception. ([adamfilipow92](https://github.com/adamfilipow92))
 
 ## v20.05.2
 

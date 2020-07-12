@@ -194,13 +194,17 @@ flank:
   ## Default: false
   # keep-file-path: false
 
-  ## The max time this test run can execute before it is cancelled (default: unlimited).
-  # run-timeout: 60m
-
   ## Terminate with exit code 0 when there are failed tests.
   ## Useful for Fladle and other gradle plugins that don't expect the process to have a non-zero exit code.
   ## The JUnit XML is used to determine failure. (default: false)
   # ignore-failed-tests: true
+
+  ## Enable create additional local junit result on local storage with failure nodes on passed flaky tests.
+  # full-junit-result: false
+
+  ## Disables flank results upload on gcloud storage.
+  ## Default: false
+  # disable-results-upload: false
 ```
 
 ### Android example
@@ -368,8 +372,8 @@ flank:
   ## 1 runs the tests once. 10 runs all the tests 10x
   # num-test-runs: 1
 
-  ## Google cloud storage path to store the JUnit XML results from the last run.
-  # smart-flank-gcs-path: gs://tmp_flank/flank/test_app_android.xml
+  ## Google cloud storage path where the JUnit XML results from the last run is stored.
+  # smart-flank-gcs-path: gs://tmp_flank/tmp/JUnitReport.xml
 
   ## Disables smart flank JUnit XML uploading. Useful for preventing timing data from being updated.
   ## Default: false
@@ -417,6 +421,13 @@ flank:
   ## This flag allows fallback for legacy xml junit results parsing
   ## Currently available for android, iOS still uses only legacy way.
   # legacy-junit-result: false
+
+  ## Enable create additional local junit result on local storage with failure nodes on passed flaky tests.
+  # full-junit-result: false
+
+  ## Disables flank results upload on gcloud storage.
+  ## Default: false
+  # disable-results-upload: false
 ```
 
 ### Android code coverage

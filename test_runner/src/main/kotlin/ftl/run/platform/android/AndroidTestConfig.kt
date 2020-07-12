@@ -1,7 +1,7 @@
 package ftl.run.platform.android
 
 import ftl.args.ShardChunks
-import ftl.config.FlankRoboDirective
+import ftl.args.FlankRoboDirective
 
 sealed class AndroidTestConfig {
 
@@ -13,7 +13,8 @@ sealed class AndroidTestConfig {
         // sharding
         val disableSharding: Boolean,
         val testShards: ShardChunks,
-        val numUniformShards: Int?
+        val numUniformShards: Int?,
+        val keepTestTargetsEmpty: Boolean
     ) : AndroidTestConfig()
 
     data class Robo(

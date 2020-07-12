@@ -1,24 +1,18 @@
 package ftl.args
 
 import com.google.common.truth.Truth.assertThat
-import ftl.args.yml.AndroidFlankYml
-import ftl.args.yml.AndroidFlankYmlParams
-import ftl.args.yml.AndroidGcloudYml
-import ftl.args.yml.AndroidGcloudYmlParams
 import ftl.args.yml.AppTestPair
-import ftl.args.yml.FlankYml
-import ftl.args.yml.FlankYmlParams
-import ftl.args.yml.GcloudYml
-import ftl.args.yml.GcloudYmlParams
 import ftl.config.Device
+import ftl.config.defaultAndroidConfig
+import ftl.run.platform.android.createAndroidTestContexts
 import ftl.run.platform.android.getAndroidMatrixShards
-import ftl.run.platform.android.getAndroidShardChunks
 import ftl.run.status.OutputStyle
 import ftl.test.util.FlankTestRunner
 import ftl.test.util.TestHelper.absolutePath
 import ftl.test.util.TestHelper.assert
 import ftl.test.util.TestHelper.getPath
 import ftl.test.util.TestHelper.getString
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -93,56 +87,45 @@ class AndroidArgsFileTest {
         }
     }
 
-    private fun configWithTestMethods(amount: Int, maxTestShards: Int = 1): AndroidArgs {
-
-        return AndroidArgs(
-            GcloudYml(GcloudYmlParams()),
-            AndroidGcloudYml(
-                AndroidGcloudYmlParams(
-                    app = appApkLocal,
+    private fun configWithTestMethods(
+        amount: Int,
+        maxTestShards: Int = 1
+    ): AndroidArgs = createAndroidArgs(
+        defaultAndroidConfig().apply {
+            platform.apply {
+                gcloud.apply {
+                    app = appApkLocal
                     test = getString("src/test/kotlin/ftl/fixtures/tmp/apk/app-debug-androidTest_$amount.apk")
-                )
-            ),
-            FlankYml(
-                FlankYmlParams(
-                    maxTestShards = maxTestShards
-                )
-            ),
-            AndroidFlankYml(),
-            ""
-        )
-    }
+                }
+            }
+            common.flank.maxTestShards = maxTestShards
+        }
+    )
 
     @Test
     fun `calculateShards additionalAppTestApks`() {
         val test1 = "src/test/kotlin/ftl/fixtures/tmp/apk/app-debug-androidTest_1.apk"
         val test155 = "src/test/kotlin/ftl/fixtures/tmp/apk/app-debug-androidTest_155.apk"
-        val config = AndroidArgs(
-            GcloudYml(GcloudYmlParams()),
-            AndroidGcloudYml(
-                AndroidGcloudYmlParams(
-                    app = appApkLocal,
-                    test = getString(test1)
-                )
-            ),
-            FlankYml(
-                FlankYmlParams(
-                    maxTestShards = 3
-                )
-            ),
-            AndroidFlankYml(
-                AndroidFlankYmlParams(
-                    additionalAppTestApks = listOf(
-                        AppTestPair(
-                            app = appApkLocal,
-                            test = getString(test155)
+        val config = createAndroidArgs(
+            defaultAndroidConfig().apply {
+                platform.apply {
+                    gcloud.apply {
+                        app = appApkLocal
+                        test = getString(test1)
+                    }
+                    flank.apply {
+                        additionalAppTestApks = mutableListOf(
+                            AppTestPair(
+                                app = appApkLocal,
+                                test = getString(test155)
+                            )
                         )
-                    )
-                )
-            ),
-            ""
+                    }
+                }
+                common.flank.maxTestShards = 3
+            }
         )
-        with(getAndroidMatrixShards(config)) {
+        with(runBlocking { config.getAndroidMatrixShards() }) {
             assertEquals(1, get("matrix-0")!!.shards["shard-0"]!!.size)
             assertEquals(51, get("matrix-1")!!.shards["shard-0"]!!.size)
             assertEquals(52, get("matrix-1")!!.shards["shard-1"]!!.size)
@@ -151,9 +134,9 @@ class AndroidArgsFileTest {
     }
 
     @Test
-    fun `calculateShards 0`() {
+    fun `calculateShards 0`() = runBlocking {
         val config = configWithTestMethods(0)
-        val testShardChunks = getAndroidShardChunks(config, config.testApk!!)
+        val testShardChunks = config.createAndroidTestContexts()
         with(config) {
             assert(maxTestShards, 1)
             assert(testShardChunks.size, 0)
@@ -163,7 +146,7 @@ class AndroidArgsFileTest {
     @Test
     fun `calculateShards 1`() {
         val config = configWithTestMethods(1)
-        val testShardChunks = getAndroidShardChunks(config, config.testApk!!)
+        val testShardChunks = getAndroidShardChunks(config)
         with(config) {
             assert(maxTestShards, 1)
             assert(testShardChunks.size, 1)
@@ -174,7 +157,7 @@ class AndroidArgsFileTest {
     @Test
     fun `calculateShards 155`() {
         val config = configWithTestMethods(155)
-        val testShardChunks = getAndroidShardChunks(config, config.testApk!!)
+        val testShardChunks = getAndroidShardChunks(config)
         with(config) {
             assert(maxTestShards, 1)
             assert(testShardChunks.size, 1)
@@ -185,7 +168,7 @@ class AndroidArgsFileTest {
     @Test
     fun `calculateShards 155 40`() {
         val config = configWithTestMethods(155, maxTestShards = 40)
-        val testShardChunks = getAndroidShardChunks(config, config.testApk!!)
+        val testShardChunks = getAndroidShardChunks(config)
         with(config) {
             assert(maxTestShards, 40)
             assert(testShardChunks.size, 40)
@@ -196,7 +179,7 @@ class AndroidArgsFileTest {
     @Test
     fun `should distribute equally to shards`() {
         val config = configWithTestMethods(155, maxTestShards = 40)
-        val testShardChunks = getAndroidShardChunks(config, config.testApk!!)
+        val testShardChunks = getAndroidShardChunks(config)
         with(config) {
             assert(maxTestShards, 40)
             assert(testShardChunks.size, 40)
@@ -215,27 +198,18 @@ class AndroidArgsFileTest {
     fun assertGcsBucket() {
         val oldConfig = AndroidArgs.load(localYamlFile)
         // Need to set the project id to get the bucket info from StorageOptions
-        val config = AndroidArgs(
-            GcloudYml(
-                GcloudYmlParams(
-                    resultsBucket = oldConfig.resultsBucket
-                )
-            ),
-            AndroidGcloudYml(
-                AndroidGcloudYmlParams(
-                    app = oldConfig.appApk,
+        val config = createAndroidArgs(
+            defaultAndroidConfig().apply {
+                common.apply {
+                    gcloud.resultsBucket = oldConfig.resultsBucket
+                    flank.project = "flank-open-source"
+                }
+                platform.gcloud.apply {
+                    app = oldConfig.appApk
                     test = oldConfig.testApk
-                )
-            ),
-            FlankYml(
-                FlankYmlParams(
-                    project = "flank-open-source"
-                )
-            ),
-            AndroidFlankYml(),
-            ""
+                }
+            }
         )
-
         assert(config.resultsBucket, "tmp_bucket_2")
     }
 

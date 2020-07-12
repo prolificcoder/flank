@@ -1,6 +1,7 @@
 package ftl.shard
 
 import com.google.common.truth.Truth.assertThat
+import ftl.args.IArgs
 import ftl.args.IosArgs
 import ftl.reports.xml.model.JUnitTestCase
 import ftl.reports.xml.model.JUnitTestResult
@@ -14,19 +15,13 @@ import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 import kotlin.system.measureNanoTime
 
 @RunWith(FlankTestRunner::class)
 class ShardTest {
-
-    @Rule
-    @JvmField
-    val exceptionRule = ExpectedException.none()!!
 
     @After
     fun tearDown() = unmockkAll()
@@ -211,7 +206,7 @@ class ShardTest {
     @Test
     fun `tests annotated with @Ignore should not produce additional shards`() {
         val androidMockedArgs = mockk<IosArgs>()
-        every { androidMockedArgs.maxTestShards } returns 50
+        every { androidMockedArgs.maxTestShards } returns IArgs.AVAILABLE_SHARD_COUNT_RANGE.last
         every { androidMockedArgs.shardTime } returns -1
 
         val testsToRun = listOf(

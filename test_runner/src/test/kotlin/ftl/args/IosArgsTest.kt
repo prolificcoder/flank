@@ -1,28 +1,24 @@
 package ftl.args
 
 import com.google.common.truth.Truth.assertThat
-import ftl.args.yml.FlankYml
-import ftl.args.yml.GcloudYml
-import ftl.args.yml.IosFlankYml
-import ftl.args.yml.IosGcloudYml
-import ftl.args.yml.IosGcloudYmlParams
 import ftl.cli.firebase.test.ios.IosRunCommand
 import ftl.config.Device
 import ftl.config.FtlConstants
 import ftl.config.FtlConstants.defaultIosModel
 import ftl.config.FtlConstants.defaultIosVersion
+import ftl.config.defaultIosConfig
 import ftl.run.status.OutputStyle
 import ftl.test.util.FlankTestRunner
 import ftl.test.util.TestHelper.absolutePath
 import ftl.test.util.TestHelper.assert
 import ftl.test.util.TestHelper.getPath
+import ftl.test.util.assertThrowsWithMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.contrib.java.lang.system.SystemErrRule
-import org.junit.rules.ExpectedException
 import org.junit.runner.RunWith
 import picocli.CommandLine
 import java.io.StringReader
@@ -38,9 +34,11 @@ class IosArgsTest {
     private val invalidApp = "../test_app/apks/invalid.apk"
     private val xctestrunFileAbsolutePath = xctestrunFile.absolutePath()
     private val testAbsolutePath = testPath.absolutePath()
+    private val resultDir = "test_dir"
     private val iosNonDefault = """
         gcloud:
           results-bucket: mockBucket
+          results-dir: $resultDir
           record-video: false
           timeout: 70m
           async: true
@@ -79,14 +77,11 @@ class IosArgsTest {
             - b/testBasicSelection2
           disable-sharding: true
           run-timeout: 15m
+          full-junit-result: true
           ignore-failed-tests: true
           keep-file-path: true
           output-style: single
         """
-
-    @Rule
-    @JvmField
-    val exceptionRule = ExpectedException.none()!!
 
     @Rule
     @JvmField
@@ -110,27 +105,33 @@ flank:
 
     @Test
     fun `args invalidDeviceExits`() {
-        exceptionRule.expectMessage("iOS 99.9 on iphoneZ is not a supported device")
-        val invalidDevice = listOf(Device("iphoneZ", "99.9"))
-        IosArgs(
-            GcloudYml(),
-            IosGcloudYml(IosGcloudYmlParams(test = testPath, xctestrunFile = xctestrunFile, device = invalidDevice)),
-            FlankYml(),
-            IosFlankYml(),
-            ""
-        )
+        assertThrowsWithMessage(Throwable::class, "iOS 99.9 on iphoneZ is not a supported device") {
+            val invalidDevice = mutableListOf(Device("iphoneZ", "99.9"))
+            createIosArgs(
+                config = defaultIosConfig().apply {
+                    common.gcloud.devices = invalidDevice
+                    platform.gcloud.also {
+                        it.test = testPath
+                        it.xctestrunFile = xctestrunFile
+                    }
+                }
+            ).validate()
+        }
     }
 
     @Test
     fun `args invalidXcodeExits`() {
-        exceptionRule.expectMessage("Xcode 99.9 is not a supported Xcode version")
-        IosArgs(
-            GcloudYml(),
-            IosGcloudYml(IosGcloudYmlParams(test = testPath, xctestrunFile = xctestrunFile, xcodeVersion = "99.9")),
-            FlankYml(),
-            IosFlankYml(),
-            ""
-        )
+        assertThrowsWithMessage(Throwable::class, "Xcode 99.9 is not a supported Xcode version") {
+            createIosArgs(
+                config = defaultIosConfig().apply {
+                    platform.gcloud.also {
+                        it.test = testPath
+                        it.xctestrunFile = xctestrunFile
+                        it.xcodeVersion = "99.9"
+                    }
+                }
+            ).validate()
+        }
     }
 
     @Test
@@ -174,6 +175,7 @@ flank:
             assert(disableSharding, true)
             assert(runTimeout, "15m")
             assert(useLegacyJUnitResult, true)
+            assert(fullJUnitResult, true)
             assert(outputStyle, OutputStyle.Single)
         }
     }
@@ -186,7 +188,7 @@ flank:
 IosArgs
     gcloud:
       results-bucket: mockBucket
-      results-dir: null
+      results-dir: $resultDir
       record-video: false
       timeout: 70m
       async: true
@@ -222,6 +224,7 @@ IosArgs
       files-to-download:
         - /sdcard/screenshots
       keep-file-path: true
+      full-junit-result: true
       # iOS flank
       test-targets:
         - b/testBasicSelection
@@ -244,7 +247,7 @@ IosArgs
 IosArgs
     gcloud:
       results-bucket: mockBucket
-      results-dir: null
+      results-dir: $resultDir
       record-video: false
       timeout: 15m
       async: false
@@ -271,6 +274,7 @@ IosArgs
       test-targets-always-run:
       files-to-download:
       keep-file-path: false
+      full-junit-result: false
       # iOS flank
       test-targets:
       disable-sharding: false
@@ -339,7 +343,7 @@ IosArgs
         )
 
         with(args) {
-            assert(maxTestShards, -1)
+            assert(maxTestShards, IArgs.AVAILABLE_SHARD_COUNT_RANGE.last)
             assert(testShardChunks.size, 17)
             testShardChunks.forEach { chunk -> assert(chunk.size, 1) }
         }
@@ -897,6 +901,19 @@ IosArgs
     fun `verify keep file path default value - ios`() {
         val iosArgs = IosArgs.load(simpleFlankPath)
         assertFalse(iosArgs.keepFilePath)
+    }
+
+    @Test
+    fun `if set max-test-shards to -1 should give maximum amount`() {
+        val yaml = """
+        gcloud:
+          test: $testPath
+          xctestrun-file: $testPath
+        flank:
+          max-test-shards: -1
+        """.trimIndent()
+        val args = IosArgs.load(yaml)
+        assertEquals(IArgs.AVAILABLE_SHARD_COUNT_RANGE.last, args.maxTestShards)
     }
 }
 

@@ -10,7 +10,7 @@ import com.google.cloud.storage.BucketInfo
 import com.google.cloud.storage.Storage
 import com.google.cloud.storage.StorageClass
 import com.google.cloud.storage.StorageOptions
-import ftl.args.yml.IYmlMap
+import ftl.args.IArgs.Companion.AVAILABLE_SHARD_COUNT_RANGE
 import ftl.args.yml.YamlObjectMapper
 import ftl.config.FtlConstants
 import ftl.config.FtlConstants.GCS_PREFIX
@@ -40,17 +40,6 @@ object ArgsHelper {
         YamlObjectMapper().registerKotlinModule()
     }
 
-    fun mergeYmlMaps(vararg ymlMaps: IYmlMap): Map<String, List<String>> {
-        val result = mutableMapOf<String, List<String>>()
-        ymlMaps.map { it.map }
-            .forEach { map ->
-                map.forEach { (k, v) ->
-                    result.merge(k, v) { a, b -> a + b }
-                }
-            }
-        return result
-    }
-
     fun assertFileExists(file: String, name: String) {
         if (!File(file).exists()) {
             throw FlankFatalError("'$file' $name doesn't exist")
@@ -64,8 +53,8 @@ object ArgsHelper {
                     " See https://github.com/GoogleCloudPlatform/google-cloud-java#specifying-a-project-id"
         )
 
-        if (args.maxTestShards !in IArgs.AVAILABLE_SHARD_COUNT_RANGE && args.maxTestShards != -1)
-            throw FlankFatalError("max-test-shards must be >= 1 and <= 50, or -1. But current is ${args.maxTestShards}")
+        if (args.maxTestShards !in AVAILABLE_SHARD_COUNT_RANGE && args.maxTestShards != -1)
+            throw FlankFatalError("max-test-shards must be >= ${AVAILABLE_SHARD_COUNT_RANGE.first} and <= ${AVAILABLE_SHARD_COUNT_RANGE.last}. But current is ${args.maxTestShards}")
 
         if (args.shardTime <= 0 && args.shardTime != -1) throw FlankFatalError("shard-time must be >= 1 or -1")
         if (args.repeatTests < 1) throw FlankFatalError("num-test-runs must be >= 1")
@@ -108,11 +97,7 @@ object ArgsHelper {
         val bucket = gcsURI.authority
         val path = gcsURI.path.drop(1) // Drop leading slash
 
-        val blob = GcStorage.storage.get(bucket, path)
-
-        if (blob == null) {
-            throw FlankFatalError("The file at '$uri' does not exist")
-        }
+        GcStorage.storage.get(bucket, path) ?: throw FlankFatalError("The file at '$uri' does not exist")
     }
 
     fun validateTestMethods(
@@ -229,21 +214,22 @@ object ArgsHelper {
         filteredTests: List<FlankTestMethod>,
         args: IArgs,
         forcedShardCount: Int? = null
-    ): ShardChunks {
+    ): CalculateShardsResult {
         if (filteredTests.isEmpty()) {
             // Avoid unnecessary computing if we already know there aren't tests to run.
-            return listOf(emptyList())
+            return CalculateShardsResult(listOf(emptyList()), emptyList())
         }
+        val (ignoredTests, testsToExecute) = filteredTests.partition { it.ignored }
         val shards = if (args.disableSharding) {
             // Avoid to cast it to MutableList<String> to be agnostic from the caller.
-            listOf(filteredTests.map { it.testName }.toMutableList())
+            listOf(testsToExecute.map { it.testName }.toMutableList())
         } else {
             val oldTestResult = GcStorage.downloadJunitXml(args) ?: JUnitTestResult(mutableListOf())
-            val shardCount = forcedShardCount ?: shardCountByTime(filteredTests, oldTestResult, args)
-            createShardsByShardCount(filteredTests, oldTestResult, args, shardCount).stringShards()
+            val shardCount = forcedShardCount ?: shardCountByTime(testsToExecute, oldTestResult, args)
+            createShardsByShardCount(testsToExecute, oldTestResult, args, shardCount).stringShards()
         }
 
-        return testMethodsAlwaysRun(shards, args)
+        return CalculateShardsResult(testMethodsAlwaysRun(shards, args), ignoredTestCases = ignoredTests.map { it.testName })
     }
 
     private fun testMethodsAlwaysRun(shards: StringShards, args: IArgs): StringShards {
@@ -257,3 +243,8 @@ object ArgsHelper {
         return shards
     }
 }
+
+fun String.processFilePath(name: String): String =
+    if (startsWith(GCS_PREFIX))
+        this.also { ArgsHelper.assertGcsFileExists(it) } else
+        ArgsHelper.evaluateFilePath(this).also { ArgsHelper.assertFileExists(it, name) }
