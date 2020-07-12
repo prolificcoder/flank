@@ -56,8 +56,8 @@ interface IArgs {
     fun useLocalResultDir() = localResultDir != defaultLocalResultsDir
 
     companion object {
-        // num_shards must be >= 1, and <= 50
-        val AVAILABLE_SHARD_COUNT_RANGE = 1..50
+        // num_shards must be >= 1, and <= 250
+        val AVAILABLE_SHARD_COUNT_RANGE = 1..250
     }
 
     interface ICompanion {
